@@ -1,4 +1,6 @@
-# send notfications through irssinotifier to android
+#  Derived from https://github.com/sdague/znc-mailonmsg
+#  And
+#  https://github.com/leitmedium/weechat-irssinotifier
 import sys
 import traceback
 from subprocess import Popen, PIPE
@@ -49,10 +51,10 @@ class mailonmsgtimer(znc.Timer):
     mod = None
 
     def RunJob(self):
-        if self.mod.send_email(self.nick, self.chan):
+        if self.mod.send_notif(self.nick, self.chan):
             self.mod.PutModule("clearing buffer")
             self.mod.clear_buffer(self.nick, self.chan)
-            self.mod.PutModule("Email sent")
+            self.mod.PutModule("Notification sent")
 
 
 class irssinotify(znc.Module):
@@ -111,7 +113,7 @@ class irssinotify(znc.Module):
         self.add_to_buffer(nick, chan, msg)
 
     @catchfail
-    def send_email(self, nick, chan):
+    def send_notif(self, nick, chan):
         msg = self.buffer(nick, chan)
         if not msg:
             self.PutModule("Something is wrong, no message")
@@ -175,11 +177,12 @@ class irssinotify(znc.Module):
 
     @catchfail
     def GetWebMenuTitle(self):
-        return "E-Mail on messages when away"
+        return "Notify on messages when away"
 
     def _encrypt(self, text):
         cmd = "openssl enc -aes-128-cbc -salt -base64 -A -pass pass:%s" % (self.nv['key'])
-        output, errors = Popen(shlex.split(cmd), stdin=PIPE, stdout=PIPE, stderr=PIPE).communicate(text+" ")
+        output, errors = Popen(shlex.split(cmd), stdin=PIPE, stdout=PIPE,
+                               stderr=PIPE).communicate(text+" ")
         output = string.replace(output, "/", "_")
         output = string.replace(output, "+", "-")
         output = string.replace(output, "=", "")
